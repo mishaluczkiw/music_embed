@@ -6,6 +6,8 @@ Load MIDI file
 """
 
 import mido as md
+
+from mido import MidiFile, MetaMessage 
 import os.path
 
 
@@ -27,4 +29,7 @@ print(song)
 
 for track in song.tracks:
     print(track)
+
+song.play
+
 
