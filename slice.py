@@ -9,7 +9,7 @@ import io
 import os
 import numpy as np
 
-import matplotlib.pyplot as plt
+i 
 
 #import MIDI.py as MIDI
 #os.system("MIDI.py")
@@ -67,11 +67,29 @@ all_quarters = np.array(all_durations)/ticks
 
 x_score = (np.array([np.array(all_starts)/ticks,np.array(all_starts)/ticks+all_quarters]))
 y_score = np.transpose(np.repeat(np.reshape(np.array(all_notes),(-1,1)),2,axis=1))
+
+# Slice by quarter
+max_quarter = np.ceil(np.max(x_score))
+t_slice = np.repeat(np.reshape(np.arange(0,max_quarter,1),(1,-1)),2,axis=0) # slice one quarter note at a time
+y_slice = np.repeat(np.reshape([np.min(y_score),np.max(y_score)],(-1,1)),np.size(t_slice,1),axis=1)
+
+numSlices = np.size(t_slice,1)
+music_vecs = [] # hold note, duration, residual flag
+s_idx = 0 # slice index
+#for t_ in t_slice[0,:]:
+#    if t_ 
+    
+
 plt.figure
-plt.plot(x_score,y_score)
+plt.plot(x_score,y_score,'k')
+plt.plot(np.repeat(t_slice,2,1))
+plt.plot(t_slice,y_slice,'r')
 plt.ylabel('Note Pitch (60 = C4)')
 plt.xlabel('t in quarter notes')
 plt.title('Waldstein 3 MIDI score')
+
+
+
 
 """
 for file in midi_paths:
