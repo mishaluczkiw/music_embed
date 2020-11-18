@@ -8,8 +8,10 @@ Created on Tue Nov 17 13:50:20 2020
 import io
 import os
 import numpy as np
-
-i 
+import matplotlib.pyplot as plt
+from MIDI import midi2score
+import plotly.graph_objects as go
+# i
 
 #import MIDI.py as MIDI
 #os.system("MIDI.py")
@@ -17,7 +19,7 @@ i
 slices = []
 
 midi_paths = ["waldstein_3.mid"]
-
+file = midi_paths[0]
 midi = open(file,'rb').read()
 score = midi2score(midi)
 '''
@@ -88,8 +90,25 @@ plt.ylabel('Note Pitch (60 = C4)')
 plt.xlabel('t in quarter notes')
 plt.title('Waldstein 3 MIDI score')
 
+# determines if note occurs in the given slice
+def in_slice(note_start, note_end, slice_start, slice_end):
+    return not (note_start > slice_end or note_end < slice_start)
 
+# x_score: [[note start times], [note end times]]
+# each slice will be either just a note set or a ({note set}, {duration set}) pair
+slices = []
+for slice in range(int(max_quarter)):
+    note_set = set()
+    for inote in range(x_score.shape[1]):
+        if in_slice(x_score[0][inote], x_score[1][inote], slice, slice+1):
+            note_set.add(y_score[0][inote])
+    slices.append(note_set)
+str_slices = [str(slice) for slice in slices]
+d = dict([(y,x+1) for x,y in enumerate(str_slices)])
+index_slices = [d[x] for x in str_slices]
 
+fig = go.Figure(data=[go.Histogram(x=str_slices)])
+fig.show()
 
 """
 for file in midi_paths:
