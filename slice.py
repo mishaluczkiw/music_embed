@@ -108,6 +108,7 @@ d = dict([(y,x+1) for x,y in enumerate(str_slices)])
 index_slices = [d[x] for x in str_slices]
 
 fig = go.Figure(data=[go.Histogram(x=str_slices)])
+fig.update_xaxes(categoryorder='total descending')
 fig.show()
 
 """
