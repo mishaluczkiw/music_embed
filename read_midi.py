@@ -53,7 +53,9 @@ def get_midi_file_paths(folder):
     return midis
 
 
-folder = 'C:\\Users\\User\\Documents\\Deep Learning\\Final\\7zip\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]'
+#folder = 'C:\\Users\\User\\Documents\\Deep Learning\\Final\\7zip\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]'
+folder = 'C:\\Users\\MaXentric\\Desktop\\Misha\\Deep_Learning\\final\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]'
+
 zips = unzip(folder, [])
 midi_paths = get_midi_file_paths(folder)
 
