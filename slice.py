@@ -91,18 +91,28 @@ plt.xlabel('t in quarter notes')
 plt.title('Waldstein 3 MIDI score')
 
 # determines if note occurs in the given slice
-def in_slice(note_start, note_end, slice_start, slice_end):
-    return not (note_start > slice_end or note_end < slice_start)
-
+# def in_slice(note_start, note_end, slice_start, slice_end):
+#     # return not (note_start > slice_end or note_end < slice_start)
+#     return not (note_start > slice_end or note_end <= slice_start)
+#
 # x_score: [[note start times], [note end times]]
 # each slice will be either just a note set or a ({note set}, {duration set}) pair
+# slices0 = []
+# for slice in range(int(max_quarter)):
+#     note_set = set()
+#     for inote in range(x_score.shape[1]):
+#         if in_slice(x_score[0][inote], x_score[1][inote], slice, slice+1):
+#             note_set.add(y_score[0][inote])
+#     slices0.append(note_set)
+# str_slices = [str(slice) for slice in slices]
+# d = dict([(y,x+1) for x,y in enumerate(str_slices)])
+# index_slices = [d[x] for x in str_slices]
+
+# runs much faster than nested for loops with in_slice function
 slices = []
-for slice in range(int(max_quarter)):
-    note_set = set()
-    for inote in range(x_score.shape[1]):
-        if in_slice(x_score[0][inote], x_score[1][inote], slice, slice+1):
-            note_set.add(y_score[0][inote])
-    slices.append(note_set)
+for slice_start in range(int(max_quarter)):
+    inote = ~((x_score[0] > slice_start+1) | (x_score[1] <= (slice_start)))
+    slices.append(set(y_score[0,inote]))
 str_slices = [str(slice) for slice in slices]
 d = dict([(y,x+1) for x,y in enumerate(str_slices)])
 index_slices = [d[x] for x in str_slices]
