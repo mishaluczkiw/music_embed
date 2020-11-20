@@ -1,6 +1,7 @@
 import os
 from zipfile import ZipFile
 import io
+from slice import read_midi_file, slice_midi, plot_slices
 
 def unzip(path, zips):
     for root, dirs, files in os.walk(path):
@@ -53,17 +54,34 @@ def get_midi_file_paths(folder):
     return midis
 
 
-#folder = 'C:\\Users\\User\\Documents\\Deep Learning\\Final\\7zip\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]'
-folder = 'C:\\Users\\MaXentric\\Desktop\\Misha\\Deep_Learning\\final\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]'
+folder = 'C:\\Users\\User\\Documents\\Deep Learning\\Final\\music_embed\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]'
+# folder = 'C:\\Users\\MaXentric\\Desktop\\Misha\\Deep_Learning\\final\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]'
 
 zips = unzip(folder, [])
 midi_paths = get_midi_file_paths(folder)
 
-# this takes way too long to run, and not sure if it can completely fit in memory
+# this takes way too long to run to run for all midi files, not sure if it can completely fit in memory
 # midis = []
 # for midi in midi_paths:
 #     midis.append(io.open('\\\\?\\' + midi, 'rb').read())
 
+all_slices = []
+start, end = 0, 100
+for i, file in enumerate(midi_paths[start:end]):
+    print('midi #%d of %d...' % (start+i+1, len(midi_paths)), end='\r')
+    try:
+        x_score, y_score = read_midi_file(file)
+        slices = slice_midi(x_score, y_score)
+        all_slices.extend(slices)
+        # also option to write to file instead of storing in variable
+        with open("slices_notes_%d-%d.txt" % (start, end), "a") as f:
+            for slice in slices:
+                f.writelines("%s\n" % slice for slice in slices)
+    except:
+        with open("bad_midis.txt", "a") as f:
+            f.write('{}\n'.format(file))
+
+plot_slices(all_slices)
 
 """
 zips = 
