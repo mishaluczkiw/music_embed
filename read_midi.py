@@ -153,6 +153,7 @@ compile_slice_counts(start, file_in, file_out)
 
 slice_files = ['slice_counts_0-30000', 'slice_counts_30000-60000', 'slice_counts_60000-90000', 'slice_counts_90000-127422']
 slices = compile_all_slice_counts(slice_files, threshold=10)
+
 # write all slice counts to a single file
 with open("all_slice_counts_notes", "wb") as f:
     pickle.dump(slices, f)
@@ -161,8 +162,8 @@ with open("all_slice_counts_notes", "wb") as f:
 # with open("all_slice_counts_notes", "rb") as f:
 #     all_slice_counts = pickle.load(f)
 
-# plot top 1000 slices
-plot_slices_bar(slices[:1000])
+# plot top 1000 slices and save html widget
+plot_slices_bar(slices[:1000], filename='slices_notes.html')
 # plt.bar(range(len(slices)), height=slices)
 # plot_slices_hist(all_slices)
 

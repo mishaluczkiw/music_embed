@@ -145,9 +145,13 @@ def plot_slices_hist(slices):
     fig.update_xaxes(categoryorder='total descending')
     fig.show()
 
-def plot_slices_bar(slices):
+def plot_slices_bar(slices, filename=''):
     fig = go.Figure([go.Bar(x=slices.index, y=slices)])
+    if filename != '':
+        # filename needs to have .html extension
+        fig.write_html(filename)
     fig.show()
+
 
 """
 for file in midi_paths:
