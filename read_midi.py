@@ -1,7 +1,11 @@
 import os
 from zipfile import ZipFile
 import io
-from slice import read_midi_file, slice_midi, plot_slices
+from slice import read_midi_file, slice_midi_note, plot_slices_bar
+import pickle
+import sys
+import pandas as pd
+# import pymongo
 
 def unzip(path, zips):
     for root, dirs, files in os.walk(path):
@@ -60,28 +64,139 @@ folder = 'C:\\Users\\User\\Documents\\Deep Learning\\Final\\music_embed\\130000_
 zips = unzip(folder, [])
 midi_paths = get_midi_file_paths(folder)
 
-# this takes way too long to run to run for all midi files, not sure if it can completely fit in memory
-# midis = []
-# for midi in midi_paths:
-#     midis.append(io.open('\\\\?\\' + midi, 'rb').read())
 
-all_slices = []
-start, end = 0, 100
-for i, file in enumerate(midi_paths[start:end]):
-    print('midi #%d of %d...' % (start+i+1, len(midi_paths)), end='\r')
-    try:
-        x_score, y_score = read_midi_file(file)
-        slices = slice_midi(x_score, y_score)
-        all_slices.extend(slices)
-        # also option to write to file instead of storing in variable
-        with open("slices_notes_%d-%d.txt" % (start, end), "a") as f:
-            for slice in slices:
-                f.writelines("%s\n" % slice for slice in slices)
-    except:
-        with open("bad_midis.txt", "a") as f:
-            f.write('{}\n'.format(file))
+# append slices to pickle file for all midi files in the given range
+def get_slices(start, end, file_prefix):
+    i_bad_midis = [3403, 7826, 25152, 40659, 40715, 58949, 63606, 67136, 99019, 99034, 106954, 112028, 118286, 122886]
+    for i in range(start, end):
+    # for i in range(122886+1, end):
+        # print('midi #%d of %d...' % (start + i + 1, len(midi_paths)), end='\r')
+        # # print('midi #%d of %d...' % (start + i + 1, len(midi_paths)))
+        print('midi #%d of %d...' % (i + 1, len(midi_paths)), end='\r')
+        file = midi_paths[i]
+        if i not in i_bad_midis:
+            try:
+                x_score, y_score = read_midi_file('\\\\?\\' + file)
+                slices = slice_midi_note(x_score, y_score)
+                with open("%s_%d-%d" % (file_prefix, start, end), "ab") as f:
+                    pickle.dump(slices, f)
+            except:
+                with open("bad_midis.txt", "a", encoding='utf-8') as f:
+                    f.write('{}\n'.format(file))
+        else:
+            with open("bad_midis.txt", "a", encoding='utf-8') as f:
+                f.write('{}\n'.format(file))
 
-plot_slices(all_slices)
+# get all slice counts for the given slice file and write counts to another file
+def compile_slice_counts(start, file_in, file_out):
+
+    all_slices = []
+    iii=start
+    # iii=90000
+    # threshold = 117976
+    # iii=threshold
+    # with open("slices_%d-%d" % (start, end), "rb") as f:
+    with open(file_in, "rb") as f:
+        while 1:
+        # while iii<threshold:
+            print(iii,end='\r')
+            try:
+                all_slices.extend(pickle.load(f))
+                # s = pickle.load(f)
+                # if iii >= threshold:
+                #     all_slices.extend(s)
+                # print(sys.getsizeof(all_slices), end='\r')
+            except EOFError:
+                break
+            iii+=1
+
+    all_slices = [str(s) for s in all_slices]
+    counts = pd.Series(all_slices).value_counts()
+    # with open("slice_counts_%d-%d" % (start, end), "wb") as f:
+    with open(file_out, "wb") as f:
+    # with open("slice_counts_%d-%d" % (start, threshold), "wb") as f:
+    # with open("slice_counts_%d-%d" % (threshold, end), "wb") as f:
+        pickle.dump(counts, f)
+
+
+# combine slices from all files
+# keep the top 500 slices?
+# filter all slices at least threshold (10) occurrences
+def compile_all_slice_counts(slice_files, threshold=10):
+    slices = pd.Series()
+    for i, file in enumerate(slice_files):
+        print('loading file %d of %d' % (i+1, len(slice_files)))
+        with open('slices_notes/' + file, "rb") as f:
+            counts = pickle.load(f)
+            counts = counts[counts >= threshold]
+            slices = slices.add(counts, fill_value=0)
+
+    # sort all slices in descending order
+    # remove empty set
+    slices = slices[slices.index != 'set()']
+    slices.sort_values(ascending=False, inplace=True)
+    return slices
+
+
+# start, end = 0, 30000
+# start, end = 30000, 60000
+# start, end = 60000, 90000
+start, end = 90000, len(midi_paths)
+# start, end = 67137, 90000
+prefix='slicesasdfasdsa'
+get_slices(start=start, end=end, file_prefix=prefix)
+
+file_in = "%s_%d-%d" % (prefix, start, end)
+file_out = "slice_counts_%d-%d" % (start, end)
+compile_slice_counts(start, file_in, file_out)
+
+
+slice_files = ['slice_counts_0-30000', 'slice_counts_30000-60000', 'slice_counts_60000-90000', 'slice_counts_90000-127422']
+slices = compile_all_slice_counts(slice_files, threshold=10)
+# write all slice counts to a single file
+with open("all_slice_counts_notes", "wb") as f:
+    pickle.dump(slices, f)
+
+# to load the binary file, use this:
+# with open("all_slice_counts_notes", "rb") as f:
+#     all_slice_counts = pickle.load(f)
+
+# plot top 1000 slices
+plot_slices_bar(slices[:1000])
+# plt.bar(range(len(slices)), height=slices)
+# plot_slices_hist(all_slices)
+
+# # checks for beginning and end of all_slices
+# file = midi_paths[start]
+# x_score, y_score = read_midi_file('\\\\?\\' + file)
+# slices_start = slice_midi_note(x_score, y_score)
+# slices_start[:5]
+# file = midi_paths[end-1]
+# file = midi_paths[112287]
+# x_score, y_score = read_midi_file('\\\\?\\' + file)
+# slices_end = slice_midi_note(x_score, y_score)
+# slices_end[-5:-1]
+
+
+
+
+"""
+midi files that cause issues when reading;
+\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]\\130000_Pop_Rock_Classical_Videogame_EDM_MIDI_Archive[6_19_15]\\A\\A\\abba-voulez-vous.mid'
+    - index 3403 in midi_paths
+    - gets stuck in reading the midi, never finishes
+    - crashes media player when playing end of the midi
+
+indexes that get hung up: possibly bc files are either too large or have nothing to play
+7826, 25152, 40659, 40715 (nothing plays), 58949, 63606, 67136, 99019, 99034, check: 106954, 112028, 118286, 122886
+
+when loading slices_90000-127422:
+98905, 101944, 111785, 117976 (takes longest),
+also 110637?, 112287?, 126881?
+starting at 90000, last index is 127014
+
+"""
+
 
 """
 zips = 

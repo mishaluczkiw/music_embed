@@ -20,7 +20,7 @@ slices = []
 
 midi_paths = ["waldstein_3.mid"]
 file = midi_paths[0]
-def read_midi_file(file):
+def read_midi_file(file, get_durations=False):
     midi = open(file,'rb').read()
     score = midi2score(midi)
     '''
@@ -46,7 +46,7 @@ def read_midi_file(file):
     my_opus = score2opus(my_score)
     '''
 
-    numTracks = len(score[2][:])
+    # numTracks = len(score[2][:])
 
     ticks = score[0]
 
@@ -71,7 +71,12 @@ def read_midi_file(file):
     x_score = (np.array([np.array(all_starts)/ticks,np.array(all_starts)/ticks+all_quarters]))
     y_score = np.transpose(np.repeat(np.reshape(np.array(all_notes),(-1,1)),2,axis=1))
 
-    return x_score, y_score
+    if get_durations:
+        durations = np.where(all_quarters >= 1 / 16, np.round(all_quarters * 16) / 16, all_quarters)
+        durations = np.transpose(np.repeat(np.reshape(np.array(durations), (-1, 1)), 2, axis=1))
+        return x_score, y_score, durations
+    else:
+        return x_score, y_score
 
 def plot_midi(x_score, y_score):
     # Slice by quarter
@@ -112,14 +117,27 @@ def plot_midi(x_score, y_score):
 # index_slices = [d[x] for x in str_slices]
 
 # runs much faster than nested for loops with in_slice function
-def slice_midi(x_score, y_score):
+# slices contain list of notes and their durations in the rder they occur in
+def slice_midi(x_score, y_score, durations):
+    slices = []
+    for slice_start in range(int(np.ceil(np.max(x_score)))):
+        inote = ~((x_score[0] > slice_start+1) | (x_score[1] <= slice_start))
+        # slices.append(set(y_score[0,inote]))
+
+        y = y_score[0, inote]
+        d = durations[0, inote]
+    # CONTINUE HERE THEN CHANGE COUNT_SLICES TO BE CONSISTENT
+        [(y[i], d[i]) for i in range(len(y))]
+    # return slices
+
+def slice_midi_note(x_score, y_score):
     slices = []
     for slice_start in range(int(np.ceil(np.max(x_score)))):
         inote = ~((x_score[0] > slice_start+1) | (x_score[1] <= (slice_start)))
         slices.append(set(y_score[0,inote]))
     return slices
 
-def plot_slices(slices):
+def plot_slices_hist(slices):
     str_slices = [str(slice) for slice in slices]
     # d = dict([(y,x+1) for x,y in enumerate(str_slices)])
 
@@ -127,9 +145,9 @@ def plot_slices(slices):
     fig.update_xaxes(categoryorder='total descending')
     fig.show()
 
-
-x, y = read_midi_file(file)
-slices2 = slice_midi(x, y)
+def plot_slices_bar(slices):
+    fig = go.Figure([go.Bar(x=slices.index, y=slices)])
+    fig.show()
 
 """
 for file in midi_paths:
