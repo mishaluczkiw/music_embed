@@ -98,33 +98,22 @@ def plot_midi(x_score, y_score):
     plt.xlabel('t in quarter notes')
     # plt.title('Waldstein 3 MIDI score')
 
-# determines if note occurs in the given slice
-# def in_slice(note_start, note_end, slice_start, slice_end):
-#     # return not (note_start > slice_end or note_end < slice_start)
-#     return not (note_start > slice_end or note_end <= slice_start)
-#
-# x_score: [[note start times], [note end times]]
-# each slice will be either just a note set or a ({note set}, {duration set}) pair
-# slices0 = []
-# for slice in range(int(max_quarter)):
-#     note_set = set()
-#     for inote in range(x_score.shape[1]):
-#         if in_slice(x_score[0][inote], x_score[1][inote], slice, slice+1):
-#             note_set.add(y_score[0][inote])
-#     slices0.append(note_set)
-# str_slices = [str(slice) for slice in slices]
-# d = dict([(y,x+1) for x,y in enumerate(str_slices)])
-# index_slices = [d[x] for x in str_slices]
-
 # runs much faster than nested for loops with in_slice function
 # slices contain list of notes and their durations in the order they occur in
-def slice_midi(x_score, y_score, durations):
+def slice_midi(x_score, y_score, durations, include_durations=False):
     slices = []
     for slice_start in range(int(np.ceil(np.max(x_score)))):
-        inote = ~((x_score[0] > slice_start+1) | (x_score[1] <= slice_start))
+        # notes are not in the slice if their start time <= slice start and their end time >= slice end
+        inote = ~((x_score[0] >= slice_start+1) | (x_score[1] <= slice_start))
         y = y_score[0, inote]
+        x = x_score[0, inote]
         d = durations[0, inote]
-        slices.append([(y[i], d[i]) for i in range(len(y))])
+        if include_durations:
+            # include duration in tuple, note start set to slice start if note starts before the slice
+            cur_slice = [(y[i], max(x[i], slice_start), d[i]) for i in range(len(y))]
+        else:
+            cur_slice = [(y[i], d[i]) for i in range(len(y))]
+        slices.append(cur_slice)
     return slices
 
 def slice_midi_note(x_score, y_score):
