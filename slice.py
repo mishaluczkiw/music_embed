@@ -99,7 +99,8 @@ def plot_midi(x_score, y_score):
     # plt.title('Waldstein 3 MIDI score')
 
 # runs much faster than nested for loops with in_slice function
-# slices contain list of notes and their durations in the order they occur in
+# slices contain list of (notes, duration) tuples in the order they occur in
+# or optionally list of (notes, note start time, duration) tuples in order
 def slice_midi(x_score, y_score, durations, include_durations=False):
     slices = []
     for slice_start in range(int(np.ceil(np.max(x_score)))):
