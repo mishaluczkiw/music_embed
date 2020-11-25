@@ -67,7 +67,7 @@ midi_paths = get_midi_file_paths(folder)
 
 # append slices to pickle file for all midi files in the given range
 def get_slices(start, end, file_prefix):
-    i_bad_midis = [3403, 7826, 25152, 40659, 40715, 58949, 63606, 67136, 99019, 99034, 106954, 112028, 118286, 122886]
+    i_bad_midis = [3403, 7826, 20202, 25152, 40659, 40715, 58949, 63606, 67136, 99019, 99034, 106954, 112028, 118286, 122886]
     for i in range(start, end):
     # for i in range(122886+1, end):
         # print('midi #%d of %d...' % (start + i + 1, len(midi_paths)), end='\r')
@@ -89,7 +89,6 @@ def get_slices(start, end, file_prefix):
 
 # get all slice counts for the given slice file and write counts to another file
 def compile_slice_counts(start, file_in, file_out):
-
     all_slices = []
     iii=start
     # iii=90000
@@ -187,6 +186,9 @@ midi files that cause issues when reading;
     - index 3403 in midi_paths
     - gets stuck in reading the midi, never finishes
     - crashes media player when playing end of the midi
+
+bad midi files:
+20202 (Bob Narley song, sounds demonic)
 
 indexes that get hung up: possibly bc files are either too large or have nothing to play
 7826, 25152, 40659, 40715 (nothing plays), 58949, 63606, 67136, 99019, 99034, check: 106954, 112028, 118286, 122886

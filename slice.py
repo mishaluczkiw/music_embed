@@ -96,7 +96,7 @@ def plot_midi(x_score, y_score):
     plt.plot(t_slice,y_slice,'r')
     plt.ylabel('Note Pitch (60 = C4)')
     plt.xlabel('t in quarter notes')
-    plt.title('Waldstein 3 MIDI score')
+    # plt.title('Waldstein 3 MIDI score')
 
 # determines if note occurs in the given slice
 # def in_slice(note_start, note_end, slice_start, slice_end):
@@ -117,18 +117,15 @@ def plot_midi(x_score, y_score):
 # index_slices = [d[x] for x in str_slices]
 
 # runs much faster than nested for loops with in_slice function
-# slices contain list of notes and their durations in the rder they occur in
+# slices contain list of notes and their durations in the order they occur in
 def slice_midi(x_score, y_score, durations):
     slices = []
     for slice_start in range(int(np.ceil(np.max(x_score)))):
         inote = ~((x_score[0] > slice_start+1) | (x_score[1] <= slice_start))
-        # slices.append(set(y_score[0,inote]))
-
         y = y_score[0, inote]
         d = durations[0, inote]
-    # CONTINUE HERE THEN CHANGE COUNT_SLICES TO BE CONSISTENT
-        [(y[i], d[i]) for i in range(len(y))]
-    # return slices
+        slices.append([(y[i], d[i]) for i in range(len(y))])
+    return slices
 
 def slice_midi_note(x_score, y_score):
     slices = []
