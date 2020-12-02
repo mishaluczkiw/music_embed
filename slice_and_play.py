@@ -11,7 +11,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from MIDI import midi2score
 import plotly.graph_objects as go
-
+import time
+from os.path import dirname, join
+import fluidsynth
 
 #import MIDI.py as MIDI
 #os.system("MIDI.py")
@@ -144,59 +146,9 @@ def plot_slices_bar(slices, filename=''):
         # filename needs to have .html extension
         fig.write_html(filename)
     fig.show()
-
-x,y = read_midi_file(file)
-slices = slice_midi(x,y)
-# plot_midi(x,y)
-
-# play notes
-
-import time
-from os.path import dirname, join
-
-import fluidsynth
-seq = fluidsynth.Sequencer(time_scale=1000, use_system_timer=(False))
-
-fs = fluidsynth.Synth()
-# init and start the synthesizer as described above…
-fs.start(driver="dsound")
-sfid = fs.sfload(r"FluidR3_GM.sf2") # use system patches
-
-fs.program_select(0, sfid, 0, 0)
-# fs.program_select(1, sfid, 0, 0) # use the same program for channel 2 for cheapness
     
     
-synthID = seq.register_fluidsynth(fs)
-
-# seq.note(time=3000, absolute=False, duration=1000, channel=0, key=60, velocity=80, dest=synthID)
-# seq.note(time=3000, absolute=False, duration=1000, channel=0, key=64, velocity=80, dest=synthID)
-# seq.note(time=3000, absolute=False, duration=1000, channel=0, key=68, velocity=80, dest=synthID)
-
-# C = seq.note(time=0, absolute=False, duration=1000, channel=0, key=60, velocity=80, dest=synthID)
-# seq.note(time=1000, absolute=False, duration=1000, channel=0, key=63, velocity=80, dest=synthID)
-# seq.note(time=2000, absolute=False, duration=1000, channel=0, key=67, velocity=80, dest=synthID)
-
-
-
-
-
-current_time = seq.get_tick()
-# seq.note_on(current_time + 500, 0, 60, 80, dest=synthID)
-
-def seq_callback(time, event, seq, data):
-    print('callback called!')
-
-callbackID = seq.register_client("myCallback", seq_callback)
-
-seq.timer(0, dest=callbackID)
-
-# seq_callback()
-
-
 def play_slice(s,synthID):
-    notes = []
-    dur = []
-    start = []
     for iNote in range(len(s)):
         # notes.append(s[iNote][0])
         # dur.append(s[iNote][1])
@@ -211,13 +163,47 @@ def play_slice(s,synthID):
         
         seq.note(time=start_time, absolute=False, duration=duration_time, channel=0, key=note, velocity=80, dest=synthID)
 
-    # convert quarter times to ticks for the sequencer
+        # convert quarter times to ticks for the sequencer
+
+# --------------------- MAIN ------------------------------------------------
+x,y = read_midi_file(file)
+slices = slice_midi(x,y)
+# plot_midi(x,y)
+
+# ------- play notes in slice ------------------------------------------------
+
+seq = fluidsynth.Sequencer(time_scale=1000, use_system_timer=(False))
+
+fs = fluidsynth.Synth()
+# init and start the synthesizer as described above…
+fs.start(driver="dsound") # might have to use another driver
+
+# AUDIO_DRIVER_NAMES = ("alsa, coreaudio, dart, dsound, file, jack, oss, portaudio, pulseaudio, "
+#                       "sdl2, sndman, waveout")
+
+sfid = fs.sfload(r"FluidR3_GM.sf2") # use system patches
+
+fs.program_select(0, sfid, 0, 0)
+# fs.program_select(1, sfid, 0, 0) # use the same program for channel 2 for cheapness
+    
+    
+synthID = seq.register_fluidsynth(fs)
+current_time = seq.get_tick()
+
+def seq_callback(time, event, seq, data):
+    print('callback called!')
+
+callbackID = seq.register_client("myCallback", seq_callback)
+
+seq.timer(0, dest=callbackID)
+
+
 
 s = slices[3]
 play_slice(s,synthID)
             
 seq_callback(0,seq.note_off(),seq,1)
-
+# this will print error messages not sure how to get rid of them but it shouldn't crap out
 
 seq.delete()
 fs.delete()
