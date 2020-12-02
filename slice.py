@@ -101,7 +101,7 @@ def plot_midi(x_score, y_score):
 # runs much faster than nested for loops with in_slice function
 # slices contain list of (notes, duration) tuples in the order they occur in
 # or optionally list of (notes, note start time, duration) tuples in order
-def slice_midi(x_score, y_score, durations, include_durations=False):
+def slice_midi(x_score, y_score, durations, include_start_times=False):
     slices = []
     for slice_start in range(int(np.ceil(np.max(x_score)))):
         # notes are not in the slice if their start time <= slice start and their end time >= slice end
@@ -109,8 +109,8 @@ def slice_midi(x_score, y_score, durations, include_durations=False):
         y = y_score[0, inote]
         x = x_score[0, inote]
         d = durations[0, inote]
-        if include_durations:
-            # include duration in tuple, note start set to slice start if note starts before the slice
+        if include_start_times:
+            # include note start time in tuple, set to slice start if note starts before the slice
             cur_slice = [(y[i], max(x[i], slice_start), d[i]) for i in range(len(y))]
         else:
             cur_slice = [(y[i], d[i]) for i in range(len(y))]
