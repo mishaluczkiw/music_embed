@@ -157,9 +157,9 @@ def play_slice(s,synthID):
         note =int(s[iNote][0])
         duration_time = int(np.ceil((s[iNote][1])*1000))
         start_time = int(np.ceil((s[iNote][2])*1000))
-        print('note=',note)
-        print('dur',duration_time)
-        print('start_time',start_time)
+        # print('note=',note)
+        # print('dur',duration_time)
+        # print('start_time',start_time)
         
         seq.note(time=start_time, absolute=False, duration=duration_time, channel=0, key=note, velocity=80, dest=synthID)
 
@@ -199,9 +199,9 @@ seq.timer(0, dest=callbackID)
 
 
 
-s = slices[3]
+s = slices[85]
 play_slice(s,synthID)
-            
+
 seq_callback(0,seq.note_off(),seq,1)
 # this will print error messages not sure how to get rid of them but it shouldn't crap out
 
