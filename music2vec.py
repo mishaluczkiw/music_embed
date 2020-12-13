@@ -349,14 +349,15 @@ def generate_training_data(sequences, window_size, num_ns, vocab_size, seed):
 
 def hash2slice(h,word_list,s):
     k = np.where(h == word_list)
-    slices = []
+    # slices = []
     # print(k)
     
     # print(int(k[0]))
-    for kk in range(len(k[0][:])):
+    # for kk in range(len(k[0][:])):
         
-        slices.append(s[int(k[0][0])])
-    return slices
+    #     slices.append(s[int(k[0][kk])])
+    return s[np.min(k)]   # return only most frequent slice
+    # return slices
 
 
 def unique(list1): 
@@ -531,7 +532,7 @@ tslices,cslices,lslices = generate_training_data(my_sequence,
 cslices_hash = vocab_hash[np.array(cslices)] 
 
 #% embed
-BATCH_SIZE = 10
+BATCH_SIZE = 1024
 BUFFER_SIZE = 10000
 dataset = tf.data.Dataset.from_tensor_slices(((tslices, cslices_hash), lslices))
 dataset = dataset.shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True)
@@ -557,6 +558,31 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="logs")
 word2vec.fit(dataset, epochs=20, callbacks=[tensorboard_callback])
 
 weights = word2vec.get_layer('w2v_embedding').get_weights()[0]
+
+#%%  create inverse vocab
+def hash2slice(h,word_list,s):
+    k = np.where(h == word_list)
+    # slices = []
+    # print(k)
+    
+    # print(int(k[0]))
+    # for kk in range(len(k[0][:])):
+        
+    #     slices.append(s[int(k[0][kk])])
+    return s[np.min(k)]   # return only most frequent slice
+
+
+inverse_vocab = {}
+for n_hash in vocab_hash:
+    inverse_vocab[n_hash] = hash2slice(n_hash,vocab_hash,vocab)
+
+idx = 0
+for n_hash in vocab_hash[:10]:
+    
+    print(n_hash)
+    print(vocab[idx])
+    idx+=1
+    print(inverse_vocab[n_hash])
 
 
 
