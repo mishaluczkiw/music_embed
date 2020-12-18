@@ -197,6 +197,16 @@ def filter_durations(slices,threshold=128):
     # return slices_good
     return slices_good_min
 
+# filter out all slices with durations > threshold
+def filter_durations_of_slice(slices,threshold=128):
+    # max_durs = np.array([max(ast.literal_eval(s))[1] for s in slices.index])
+    min_durs = np.array([min(s)[1] for s in slices])
+    # slices_good = slices[max_durs <= threshold]
+    slices_good_min = slices[min_durs <= threshold]
+    
+    # return slices_good
+    return slices_good_min
+
 # runs much faster than nested for loops with in_slice function
 # slices contain list of (notes, duration) tuples in the order they occur in
 # or optionally list of (notes, note start time, duration) tuples in order
@@ -415,11 +425,14 @@ def unique(list1):
 with open("all_slice_counts_notes", "rb") as f:
     all_slice_counts = pickle.load(f)
     print("Loading all slice counts...")
-# # plot top 1000 slices and save html widget
+# # plot top 1000 slices and save html widget 
 # plot_slices_bar(slices[:1000], filename='slices_1000.html')
 all_slices_counts_dur = pickle.load(open('all_slice_counts_gte_10','rb'))
 
-good_slices = filter_durations(all_slices_counts_dur,128)
+good_slices = filter_durations(all_slices_counts_dur,1)
+#%%
+
+
 #%% Hash the entire vocab
 s_good = []
 # turn to list of arrays
@@ -427,15 +440,21 @@ for s_idx in range(len(good_slices)):
     s_good.append(ast.literal_eval(good_slices.index[s_idx]))
   
 VOCABSIZE = 10000
-vocab = s_good[0:VOCABSIZE]
+# vocab = s_good[0:VOCABSIZE]
+vocab = np.copy(s_good)
 
-vocab_hash = np.zeros((VOCABSIZE))
+
+# vocab_hash = np.zeros((VOCABSIZE))
+vocab_hash = np.zeros(len(s_good))
 
 
-for idx in range(VOCABSIZE):
+# for idx in range(VOCABSIZE):
+for idx in range(len(s_good)):
     # vocab_hash[idx] = int(np.mod(hash(good_slices.index[idx]),VOCABSIZE)) # hash pandas object
-    vocab_hash[idx] = int(np.mod(hash(str(set(s_good[idx]))),VOCABSIZE)) # hash list as str
-    
+    # vocab_hash[idx] = int(np.mod(hash(str(set(s_good[idx]))),VOCABSIZE)) # hash list as str
+    vocab_hash[idx] = int(np.mod(hash(str(s_good[idx])),VOCABSIZE)) # hash list as str
+
+
 
 
 #%% Play slice stuff
@@ -491,7 +510,7 @@ for i in range(1000): # specify how many files to append
         
         s = slice_midi(x,y,d,include_start_times=False) # no starting time
         s3 = slice_midi(x,y,d,include_start_times=True) # with starting time, used to play
-        # s2 = pd.Series(s)
+        s2 = pd.Series(s)
         
         # plot_midi(x,y)
         # rand_int = int(np.floor(np.random.uniform(0,len(s3),1)))
@@ -500,7 +519,10 @@ for i in range(1000): # specify how many files to append
         for iSlice in range(len(s)):
             
             # val_hash = np.mod(hash(str(s2[iSlice])),VOCABSIZE)
-            val_hash = np.mod(hash(str(set(s[iSlice]))),VOCABSIZE)
+            # val_hash = np.mod(hash(str(set(s[iSlice]))),VOCABSIZE)
+            val_hash = np.mod(hash(str(s[iSlice])),VOCABSIZE)
+
+            
             word_list.append(val_hash)
         
         slice_list.extend(s) # add slices without start time
@@ -509,6 +531,64 @@ for i in range(1000): # specify how many files to append
             # print(val_hash)
         # print(word_list[0:10])
 print("len of word list:",len(word_list))
+#%%
+# filter out all slices with durations > threshold
+def filter_durations_of_slice(slices,threshold=128):
+    min_durs = min(s)
+    
+    
+    # slices_good = slices[max_durs <= threshold]
+    slices_good_min = slices[min_durs <= threshold]
+    
+    # return slices_good
+    return slices_good_min
+
+
+s2_good = filter_durations_of_slice(s,1)
+print("len of good slices",len(s2_good))
+# f1 = open('word_list10000.pckl','wb')
+# f2 = open('s_10000.pckl','wb')
+# f3 = open('s3_10000.pckl','wb')
+
+# pickle.dump('word_list',f1)
+# pickle.dump('s',f2)
+# pickle.dump('s3',f3)
+
+# f1.close()
+# f2.close()
+# f3.close()
+#%% Inverse vocab
+
+def hash2slice(h,word_list,s):
+    k = np.where(h == word_list)
+    # slices = []
+    # print(k)
+    
+    # print(int(k[0]))
+    # for kk in range(len(k[0][:])):
+        
+    #     slices.append(s[int(k[0][kk])])
+    return s[np.min(k)]   # return only most frequent slice
+
+
+inverse_vocab = {}
+inverse_vocab3 = {}
+idx_h = 0
+for n_hash in word_list:
+    inverse_vocab[n_hash] = hash2slice(n_hash,vocab_hash,vocab)
+    inverse_vocab3[n_hash] = hash2slice(n_hash,word_list,slice_list3)
+    idx_h += 1
+    if idx_h%10000 == 0:
+        print("Percent done: ",(idx_h*100)/len(word_list))
+    
+
+# idx = 0
+# for n_hash in vocab_hash[:10]:
+    
+#     print(n_hash)
+#     print(vocab[idx])
+#     idx+=1
+#     print(inverse_vocab[n_hash])
 
 #%%  Generate training data
 print("Generating Training data...")
@@ -555,34 +635,49 @@ word2vec.compile(optimizer='adam',
 
 tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir="logs")
 
-word2vec.fit(dataset, epochs=20, callbacks=[tensorboard_callback])
+# word2vec.fit(dataset, epochs=20, callbacks=[tensorboard_callback])
 
 weights = word2vec.get_layer('w2v_embedding').get_weights()[0]
+#%%
+import io
+out_v = io.open('vectors_filt.tsv', 'w', encoding='utf-8')
+out_m = io.open('metadata_filt.tsv', 'w', encoding='utf-8')
 
-#%%  create inverse vocab
-def hash2slice(h,word_list,s):
-    k = np.where(h == word_list)
-    # slices = []
-    # print(k)
+for index, word in enumerate(vocab):
+  if  index == 0: continue # skip 0, it's padding.
+  vec = weights[index] 
+  out_v.write('\t'.join([str(x) for x in vec]) + "\n")
+  out_m.write(str(word) + "\n")
+out_v.close()
+out_m.close()
+ 
+
+
+#%%
+# #%%  create inverse vocab
+# def hash2slice(h,word_list,s):
+#     k = np.where(h == word_list)
+#     # slices = []
+#     # print(k)
     
-    # print(int(k[0]))
-    # for kk in range(len(k[0][:])):
+#     # print(int(k[0]))
+#     # for kk in range(len(k[0][:])):
         
-    #     slices.append(s[int(k[0][kk])])
-    return s[np.min(k)]   # return only most frequent slice
+#     #     slices.append(s[int(k[0][kk])])
+#     return s[np.min(k)]   # return only most frequent slice
 
 
-inverse_vocab = {}
-for n_hash in vocab_hash:
-    inverse_vocab[n_hash] = hash2slice(n_hash,vocab_hash,vocab)
+# inverse_vocab = {}
+# for n_hash in vocab_hash:
+#     inverse_vocab[n_hash] = hash2slice(n_hash,vocab_hash,vocab)
 
-idx = 0
-for n_hash in vocab_hash[:10]:
+# idx = 0
+# for n_hash in vocab_hash[:10]:
     
-    print(n_hash)
-    print(vocab[idx])
-    idx+=1
-    print(inverse_vocab[n_hash])
+#     print(n_hash)
+#     print(vocab[idx])
+#     idx+=1
+#     print(inverse_vocab[n_hash])
 
 
 
